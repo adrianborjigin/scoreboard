@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Volleyball Score Tracker</title>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --primary: #2563eb;
+            --primary-light: #eff6ff;
+            --danger: #ef4444;
+            --danger-light: #fef2f2;
+            --border: #e2e8f0;
+            --radius: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px;
+            overflow-x: hidden;
+        }
+
+        header {
+            width: 100%;
+            max-width: 480px;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .match-info {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .score-container {
+            width: 100%;
+            max-width: 480px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .team-card {
+            background: var(--card-bg);
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            transition: transform 0.1s ease, border-color 0.2s ease;
+        }
+
+        .team-card:active {
+            transform: scale(0.98);
+        }
+
+        .team-card.serving {
+            border-color: var(--primary);
+            background-color: var(--primary-light);
+        }
+
+        .team-name-input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 12px;
+            padding: 4px;
+            border-bottom: 1px dashed transparent;
+        }
+
+        .team-name-input:focus {
+            outline: none;
+            border-bottom-color: var(--text-muted);
+        }
+
+        .sets-won {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            background: var(--bg-color);
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .team-card.serving .sets-won {
+            background: #fff;
+            border-color: rgba(37, 99, 235, 0.2);
+        }
+
+        .score-display {
+            font-size: 4.5rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 16px;
+            user-select: none;
+        }
+
+        .tap-area {
+            position: absolute;
+            top: 60px;
+            bottom: 60px;
+            left: 0;
+            right: 0;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        .btn-minus {
+            background: var(--bg-color);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 3;
+            transition: background-color 0.2s;
+        }
+
+        .btn-minus:active {
+            background-color: var(--border);
+        }
+
+        .serving-indicator {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 10px;
+            height: 10px;
+            background-color: transparent;
+            border-radius: 50%;
+        }
+
+        .team-card.serving .serving-indicator {
+            background-color: var(--primary);
+            box-shadow: 0 0 8px var(--primary);
+        }
+
+        .controls-panel {
+            width: 100%;
+            max-width: 480px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .history-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .set-history {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            min-height: 28px;
+            flex-wrap: wrap;
+        }
+
+        .set-badge {
+            background: var(--bg-color);
+            border: 1px solid var(--border);
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: background-color 0.2s;
+        }
+
+        .btn-secondary {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+        }
+
+        .btn-secondary:active {
+            background-color: var(--border);
+        }
+
+        .btn-danger {
+            background-color: var(--danger-light);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-danger:active {
+            background-color: #fee2e2;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Volleyball Tracker</h1>
+        <div id="match-status" class="match-info">Set 1</div>
+    </header>
+
+    <main class="score-container">
+        <!-- Team 1 -->
+        <div id="card-t1" class="team-card serving">
+            <div class="serving-indicator"></div>
+            <input type="text" id="name-t1" class="team-name-input" value="Home" aria-label="Team 1 Name">
+            <div id="sets-t1" class="sets-won">Sets: 0</div>
+            <div id="score-t1" class="score-display">0</div>
+            <div class="tap-area" onclick="incrementScore(1)"></div>
+            <button class="btn-minus" onclick="decrementScore(1)" aria-label="Decrease score">&minus;</button>
+        </div>
+
+        <!-- Team 2 -->
+        <div id="card-t2" class="team-card">
+            <div class="serving-indicator"></div>
+            <input type="text" id="name-t2" class="team-name-input" value="Away" aria-label="Team 2 Name">
+            <div id="sets-t2" class="sets-won">Sets: 0</div>
+            <div id="score-t2" class="score-display">0</div>
+            <div class="tap-area" onclick="incrementScore(2)"></div>
+            <button class="btn-minus" onclick="decrementScore(2)" aria-label="Decrease score">&minus;</button>
+        </div>
+    </main>
+
+    <footer class="controls-panel">
+        <div class="history-title">Set History</div>
+        <div id="set-history" class="set-history">
+            <!-- Dynamic history tags will populate here -->
+        </div>
+        <div class="action-buttons">
+            <button class="btn btn-secondary" onclick="switchServer()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M4 4l5 5"/></svg>
+                Switch Server
+            </button>
+            <button class="btn btn-danger" onclick="resetMatch()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                Reset Match
+            </button>
+        </div>
+    </footer>
+
+    <script>
+        let state = {
+            t1: { score: 0, sets: 0 },
+            t2: { score: 0, sets: 0 },
+            serving: 1,
+            history: []
+        };
+
+        const scoreT1 = document.getElementById('score-t1');
+        const scoreT2 = document.getElementById('score-t2');
+        const setsT1 = document.getElementById('sets-t1');
+        const setsT2 = document.getElementById('sets-t2');
+        const cardT1 = document.getElementById('card-t1');
+        const cardT2 = document.getElementById('card-t2');
+        const nameT1 = document.getElementById('name-t1');
+        const nameT2 = document.getElementById('name-t2');
+        const matchStatus = document.getElementById('match-status');
+        const historyContainer = document.getElementById('set-history');
+
+        function updateUI() {
+            scoreT1.textContent = state.t1.score;
+            scoreT2.textContent = state.t2.score;
+            setsT1.textContent = `Sets: ${state.t1.sets}`;
+            setsT2.textContent = `Sets: ${state.t2.sets}`;
+
+            cardT1.classList.toggle('serving', state.serving === 1);
+            cardT2.classList.toggle('serving', state.serving === 2);
+
+            let currentSet = state.t1.sets + state.t2.sets + 1;
+            if (state.t1.sets === 3 || state.t2.sets === 3) {
+                let winner = state.t1.sets === 3 ? nameT1.value : nameT2.value;
+                matchStatus.textContent = `${winner} Wins the Match!`;
+            } else {
+                matchStatus.textContent = `Set ${currentSet}`;
+            }
+
+            historyContainer.innerHTML = '';
+            state.history.forEach((set, index) => {
+                const badge = document.createElement('span');
+                badge.className = 'set-badge';
+                badge.textContent = `S${index + 1}: ${set.t1}-${set.t2}`;
+                historyContainer.appendChild(badge);
+            });
+        }
+
+        function incrementScore(team) {
+            if (state.t1.sets === 3 || state.t2.sets === 3) return;
+
+            state.serving = team;
+
+            if (team === 1) state.t1.score++;
+            else state.t2.score++;
+
+            checkSetWinner();
+            updateUI();
+        }
+
+        function decrementScore(team) {
+            if (team === 1 && state.t1.score > 0) state.t1.score--;
+            if (team === 2 && state.t2.score > 0) state.t2.score--;
+            updateUI();
+        }
+
+        function switchServer() {
+            state.serving = state.serving === 1 ? 2 : 1;
+            updateUI();
+        }
+
+        function checkSetWinner() {
+            let currentSet = state.t1.sets + state.t2.sets + 1;
+            let targetScore = currentSet === 5 ? 15 : 25;
+
+            let s1 = state.t1.score;
+            let s2 = state.t2.score;
+
+            if (s1 >= targetScore && (s1 - s2) >= 2) {
+                state.t1.sets++;
+                archiveSet(s1, s2);
+            } else if (s2 >= targetScore && (s2 - s1) >= 2) {
+                state.t2.sets++;
+                archiveSet(s1, s2);
+            }
+        }
+
+        function archiveSet(s1, s2) {
+            state.history.push({ t1: s1, t2: s2 });
+            state.t1.score = 0;
+            state.t2.score = 0;
+        }
+
+        function resetMatch() {
+            if (confirm("Reset current match data and scores?")) {
+                state = {
+                    t1: { score: 0, sets: 0 },
+                    t2: { score: 0, sets: 0 },
+                    serving: 1,
+                    history: []
+                };
+                updateUI();
+            }
+        }
+
+        nameT1.addEventListener('input', updateUI);
+        nameT2.addEventListener('input', updateUI);
+
+        updateUI();
+    </script>
+</body>
+</html>
